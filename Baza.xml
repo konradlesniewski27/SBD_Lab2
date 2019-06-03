@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.2 (Build 741U_SU)" ts="2019-06-01 16:44:08">
+<Class name="User.Kasa">
+<Description>
+Klasa opisująca parametry, elementu w którym pracuje Pracownik i obsługuje klienta</Description>
+<SqlTableName>Kasa</SqlTableName>
+<Super>%Persistent,%Populate,%XML.Adaptor,%ZEN.DataModel.Adaptor</Super>
+<TimeChanged>64786,58927.755394</TimeChanged>
+<TimeCreated>64785,60725.340494</TimeCreated>
+
+<Property name="CzyWolne">
+<Description>
+Parametr odpowiadający czy dana kasa jest wolna i czy kolejny klient z kolejki moze byc obslugiwany
+TRUE - wolne
+FALSE - zajete</Description>
+<Type>%Boolean</Type>
+<Required>1</Required>
+</Property>
+
+<Method name="RozpocznijObsługe">
+<Description>
+Metoda rozpoczynająca proces obslugi </Description>
+<Language>java</Language>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	Random r = new Random();
+	//Losowanie czasu trwania obslugi klienta w zakresie od 0 do 5 sekund.
+	int opoznienie = r.nextInt(6);
+	opoznienie = opoznienie * 1000;	
+	return opoznienie;
+]]></Implementation>
+</Method>
+
+<Method name="ZakonczOblsuge">
+<Description>
+Zakoncza proces obslugi i ustawia parametr kasy czyWolne na TRUE</Description>
+<FormalSpec>opoznienie:%Integer</FormalSpec>
+<Language>java</Language>
+<ReturnType>%Boolean</ReturnType>
+<Implementation><![CDATA[
+	try
+	{
+		Thread.sleep(opoznienie);
+		CzyWolne = TRUE;
+	}
+	catch( InterruptedExeption e)
+	{
+		System.out.println("Error");
+	}
+	
+	
+	return CzyWolne;
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Library.CacheStorage</Type>
+<DataLocation>^User.KasaD</DataLocation>
+<DefaultData>KasaDefaultData</DefaultData>
+<IdLocation>^User.KasaD</IdLocation>
+<IndexLocation>^User.KasaI</IndexLocation>
+<StreamLocation>^User.KasaS</StreamLocation>
+<Data name="KasaDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>CzyWolne</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="User.Klient">
+<Description>
+Osoba wykonująca zakupy w sklepie</Description>
+<Super>User.Osoba</Super>
+<TimeChanged>64786,58926.86772</TimeChanged>
+<TimeCreated>64782,64283.710661</TimeCreated>
+
+<Property name="CzyUprzywilejowany">
+<Description>
+Parametr odpowiadający czy dany klient ma pierwszeństwo w kolejce
+TRUE  - uprzywielejowany
+FALSE - nie uprzywilejowany</Description>
+<Type>%Boolean</Type>
+<Required>1</Required>
+</Property>
+
+<Property name="CzyGotowy">
+<Description>
+Parametr odpowiadający czy dany klient skończył robić zakupy i czy jest gotowy do dołaczęnia do kolejki
+TRUE - gotowy
+FALSE - nie gotowy</Description>
+<Type>%Boolean</Type>
+<Required>1</Required>
+</Property>
+
+<Method name="RozpocznijZakupy">
+<Description>
+Metoda rozpoczynająca proces zakupów </Description>
+<Language>java</Language>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	Random r = new Random();
+	//Losowanie czasu trwania zakupu w zakresie od 0 do 5 sekund.
+	int opoznienie = r.nextInt(6);
+	opoznienie = opoznienie * 1000;
+	return opoznienie;
+]]></Implementation>
+</Method>
+
+<Method name="ZakonczZakupy">
+<Description>
+Zakoncza proces zakupów i ustawia parametr klienta CzyGotowy na TRUE</Description>
+<FormalSpec>opoznienie:%Integer</FormalSpec>
+<Language>java</Language>
+<ReturnType>%Boolean</ReturnType>
+<Implementation><![CDATA[
+	try
+	{
+		Thread.sleep(opoznienie);
+		CzyGotowy = TRUE;
+	}
+	catch( InterruptedExeption e)
+	{
+		System.out.println("Error");
+	}
+	
+	return CzyGotowy;
+]]></Implementation>
+</Method>
+
+<Property name="Child">
+<Type>User.Osoba</Type>
+<Cardinality>children</Cardinality>
+<Inverse>ChildKlient</Inverse>
+<Relationship>1</Relationship>
+</Property>
+
+<Property name="ChildPracownik">
+<Type>User.Pracownik</Type>
+<Cardinality>parent</Cardinality>
+<Inverse>Child</Inverse>
+<Relationship>1</Relationship>
+</Property>
+</Class>
+
+
+<Class name="User.Kolejka">
+<Description>
+Klasa opisująca parametry oraz metody kolejki, do której dołączają klienci po zakończeniu zakupów
+</Description>
+<SqlTableName>Kolejka</SqlTableName>
+<Super>%Persistent,%Populate,%XML.Adaptor,%ZEN.DataModel.Adaptor</Super>
+<TimeChanged>64785,67992.380289</TimeChanged>
+<TimeCreated>64785,60307.965412</TimeCreated>
+
+<Property name="priorityTyp">
+<Description>
+Parametr określający czy dana kolejka jest priorytetowa
+TRUE - priorytetowa
+FALSE - niepriorytetowa</Description>
+<Type>%Boolean</Type>
+<Required>1</Required>
+</Property>
+
+<Index name="priorityTypIndex">
+<Properties>priorityTyp</Properties>
+</Index>
+
+<Method name="Dodaj">
+<Description>
+Metoda dołączenia klienta do kolejki </Description>
+<Language>java</Language>
+<Implementation><![CDATA[	kolejka.add();
+]]></Implementation>
+</Method>
+
+<Method name="DodajPrio">
+<Description>
+Metoda dołaczenia klienta do kolejki w sposób priorytetowy</Description>
+<FormalSpec>KlientPrio:%Boolean</FormalSpec>
+<Language>java</Language>
+<Implementation><![CDATA[
+	int licznik = 0;
+	while(kolejka.get(licznik).getPriority() < KlientPrio )
+    {
+       licznik++;
+    }
+	kolejka.add();
+]]></Implementation>
+</Method>
+
+<Method name="Kolejka">
+<Description>
+Konstruktor kolejki</Description>
+<FormalSpec>priorityTyph:%Boolean</FormalSpec>
+<Language>java</Language>
+<Implementation><![CDATA[	this.priorityTyp = priorityTyph;
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Library.CacheStorage</Type>
+<DataLocation>^User.KolejkaD</DataLocation>
+<DefaultData>KolejkaDefaultData</DefaultData>
+<IdLocation>^User.KolejkaD</IdLocation>
+<IndexLocation>^User.KolejkaI</IndexLocation>
+<StreamLocation>^User.KolejkaS</StreamLocation>
+<Data name="KolejkaDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>priorityTyp</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="User.Osoba">
+<Abstract>1</Abstract>
+<TimeChanged>64786,42044.353855</TimeChanged>
+<TimeCreated>64782,63687.220805</TimeCreated>
+
+<Property name="IdOSoby">
+<Type>%Integer</Type>
+<Required>1</Required>
+</Property>
+
+<Index name="IdOSobyIndex">
+<Properties>IdOSoby</Properties>
+<Unique>1</Unique>
+</Index>
+
+<Property name="Nazwisko">
+<Description>
+Nazwisko danej osoby.</Description>
+<Type>%String</Type>
+<Required>1</Required>
+<SqlFieldName>Nazwisko</SqlFieldName>
+</Property>
+
+<Index name="NazwiskoIndex">
+<Properties>Nazwisko</Properties>
+</Index>
+
+<Property name="Imie">
+<Description>
+Imie danej osoby</Description>
+<Type>%String</Type>
+<Relationship>1</Relationship>
+<Required>1</Required>
+</Property>
+
+<Index name="ImieIndex">
+<Properties>Imie</Properties>
+</Index>
+
+<Property name="Miasto">
+<Description>
+Miasto zamieszkania</Description>
+<Type>%String</Type>
+<Required>1</Required>
+</Property>
+
+<Index name="MiastoIndex">
+<Properties>Miasto</Properties>
+</Index>
+
+<Property name="Ulica">
+<Description>
+Ulica zamieszkania</Description>
+<Type>%String</Type>
+<Required>1</Required>
+</Property>
+
+<Index name="UlicaIndex">
+<Properties>Ulica</Properties>
+</Index>
+
+<Property name="NumerMieszkania">
+<Description>
+Numer mieszkania</Description>
+<Type>%Integer</Type>
+<Required>1</Required>
+</Property>
+
+<Index name="NumerMieszkaniaIndex">
+<Properties>NumerMieszkania</Properties>
+</Index>
+
+<Property name="NumerKontaktowy">
+<Description>
+Numer kontaktowy do osoby</Description>
+<Type>%CPP.LongLong</Type>
+<Required>1</Required>
+</Property>
+
+<Index name="NumerKontaktowyIndex">
+<Properties>NumerKontaktowy</Properties>
+</Index>
+
+<Property name="ChildKlient">
+<Type>User.Klient</Type>
+<Cardinality>parent</Cardinality>
+<Inverse>Child</Inverse>
+<Relationship>1</Relationship>
+</Property>
+</Class>
+
+
+<Class name="User.Pracownik">
+<Description>
+Osoba odpowiedzialna za prace w sklepie</Description>
+<Super>User.Osoba</Super>
+<TimeChanged>64786,42075.624135</TimeChanged>
+<TimeCreated>64782,64642.986189</TimeCreated>
+
+<Property name="CzyWolny">
+<Description>
+Parametr mówiący nam czy pracownik jest wolny w danej chwili
+TRUE - jest wolny
+FALSE - nie jest</Description>
+<Type>%Boolean</Type>
+<Required>1</Required>
+</Property>
+
+<Property name="Child">
+<Type>User.Klient</Type>
+<Cardinality>children</Cardinality>
+<Inverse>ChildPracownik</Inverse>
+<Relationship>1</Relationship>
+</Property>
+</Class>
+
+
+<Class name="User.Zaplata">
+<Description>
+Klasa opisująca wartość zakupów danego klienta</Description>
+<SqlTableName>Zaplata</SqlTableName>
+<Super>%Persistent,%Populate,%XML.Adaptor,%ZEN.DataModel.Adaptor</Super>
+<TimeChanged>64786,58924.04692</TimeChanged>
+<TimeCreated>64785,62991.33015</TimeCreated>
+
+<Method name="WyliczWartosc">
+<Description>
+Metoda wyliczajaca wartosc zakupów klienta</Description>
+<Language>java</Language>
+<ReturnType>%CPP.Integer</ReturnType>
+<Implementation><![CDATA[
+	Random r = new Random();
+	//Losowanie wartosci zakupow klienta w zakresie od 0 do 50.
+	int wartosc = r.nextInt(51);	
+	
+	return wartosc;
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Library.CacheStorage</Type>
+<DataLocation>^User.ZaplataD</DataLocation>
+<DefaultData>ZaplataDefaultData</DefaultData>
+<IdLocation>^User.ZaplataD</IdLocation>
+<IndexLocation>^User.ZaplataI</IndexLocation>
+<StreamLocation>^User.ZaplataS</StreamLocation>
+<Data name="ZaplataDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+</Export>
